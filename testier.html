@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Token-Gated Content Example</title>
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <script>
+        async function checkTokenOwnership() {
+            // Connect to Phantom Wallet
+            const provider = window.solana;
+            console.log('Provider:', provider);
+
+            if (!provider) {
+                console.log('Phantom Wallet extension not detected or not properly configured.');
+                return;
+            }
+
+            await provider.connect();
+
+            // Get the current connected wallet address
+            const walletAddress = provider.publicKey.toString();
+            console.log('Wallet Address:', walletAddress);
+
+            // Define the NFT collection ID
+            const collectionId = '50036f8f9acba8b319b79eafd47b1f4ab1abf5850ab22893207ccea9666e5f0d';
+
+            // Get the NFT's metadata
+            const connection = new web3.Connection(web3.clusterApiUrl('mainnet-beta'));
+            const tokenAccounts = await connection.getParsedTokenAccountsByOwner(walletAddress, { programId: web3.SYSVAR_RENT_PUBKEY });
+
+            // Check if the NFT is owned by the visitor
+            const ownedNFTs = tokenAccounts.value.reduce((total, account) => {
+                if (account.account.data.parsed.info.tokenAmount.uiAmount > 0 && account.account.data.parsed.info.tokenAmount.tokenId === collectionId) {
+                    return total + 1;
+                }
+                return total;
+            }, 0);
+
+            if (ownedNFTs > 0) {
+                // Display the gated content
+                document.getElementById('content').style.display = 'block';
+            } else {
+                // Hide the gated content
+                document.getElementById('content').style.display = 'none';
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Welcome to the Token-Gated Content Example</h1>
+
+    <!-- Rest of the HTML... -->
+
+    <button onclick="checkTokenOwnership()">Connect Wallet and Check Ownership</button>
+</body>
+</html>
